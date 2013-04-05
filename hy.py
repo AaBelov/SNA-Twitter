@@ -11,6 +11,9 @@ import sys
 import os
 import networkx as net
 import urllib
+import json
+from networkx.readwrite import json_graph
+import http_server
 
 def read_tw_friends(g, name):
     response=urllib.urlopen('https://api.twitter.com/1/followers/ids.json?cursor=-1&screen_name='+name)
@@ -60,19 +63,20 @@ def snowball_sampling(g, center, max_depth=1, current_depth=0, taboo_list=[]):
         taboo_list=snowball_sampling(g, node, current_depth=current_depth+1, max_depth=max_depth, taboo_list=taboo_list)
     
     return taboo_list
-    
-    
-
-
-
-
-
-
+ 
 
 def main():
     g=net.Graph()
-#    read_lj_friends(g,'kozel_na_sakse')
+    #read_lj_friends(g,'kozel_na_sakse')
     snowball_sampling(g,'justinbieber')
+    for n in g:
+        g.node[n]['name'] = n
+    # write json formatted data
+    d = json_graph.node_link_data(g) # node-link format to serialize
+    # write json 
+    json.dump(d, open('force/force.json','w'))
+    http_server.load_url('force/force.html')
+	
     
 
 if __name__ == '__main__':
