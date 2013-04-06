@@ -14,9 +14,11 @@ import urllib
 import json
 from networkx.readwrite import json_graph
 import http_server
+import time
+
 
 def read_tw_friends(g, name):
-    response=urllib.urlopen('https://api.twitter.com/1/followers/ids.json?cursor=-1&screen_name='+name)
+    response=urllib.urlopen('https://api.twitter.com/1/followers/ids.json?cursor=-1&user_id='+name)
     lines=response.readlines()      
     start=lines[0].find('[')
     end=lines[0].find(']')
@@ -45,36 +47,38 @@ def read_lj_friends(g, name):
         else:
             g.add_edge(name,parts[1])
 
-def snowball_sampling(g, center, max_depth=1, current_depth=0, taboo_list=[]):
+def snowball_sampling(g, center, count, max_depth=2, current_depth=0, taboo_list=[]):
     # if we have reached the depth limit of the search, bomb out.
-    print center, current_depth, max_depth, taboo_list
+    #print center, current_depth, max_depth, taboo_list
     if current_depth==max_depth: 
-        print 'out of depth'
+    #    print 'out of depth'
         return taboo_list
     if center in taboo_list:
-        print 'taboo' 
+    #    print 'taboo' 
         return taboo_list #we've been here before
     else:
         taboo_list.append(center) # we shall never return
-        
-    read_tw_friends(g, center)
+    read_lj_friends(g, center)
     
     for node in g.neighbors(center):
-        taboo_list=snowball_sampling(g, node, current_depth=current_depth+1, max_depth=max_depth, taboo_list=taboo_list)
+        count=count+1
+        print count
+        taboo_list=snowball_sampling(g, node, count, current_depth=current_depth+1, max_depth=max_depth, taboo_list=taboo_list)
     
     return taboo_list
  
 
 def main():
     g=net.Graph()
-    #read_lj_friends(g,'kozel_na_sakse')
-    snowball_sampling(g,'justinbieber')
-    for n in g:
-        g.node[n]['name'] = n
+    snowball_sampling(g,'navalny', 0)
+    #g=net.read_pajek('twitter_graph')
+    #for n in g:
+    #    g.node[n]['name'] = n
     # write json formatted data
-    d = json_graph.node_link_data(g) # node-link format to serialize
-    # write json 
-    json.dump(d, open('force/force.json','w'))
+    #d = json_graph.node_link_data(g) # node-link format to serialize
+    # write json
+    net.write_pajek(g,'lj_graph')
+    json.dump(d, open('force/lj_graph.json','w'))
     http_server.load_url('force/force.html')
 	
     
