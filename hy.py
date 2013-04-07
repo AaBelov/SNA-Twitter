@@ -14,8 +14,10 @@ import urllib
 import json
 from networkx.readwrite import json_graph
 import http_server
-import time
 
+def sorted_map(map):
+    res=sorted(map.iteritems(), key=lambda (k,v): (-v,k))
+    return res
 
 def read_tw_friends(g, name):
     response=urllib.urlopen('https://api.twitter.com/1/followers/ids.json?cursor=-1&user_id='+name)
@@ -47,7 +49,7 @@ def read_lj_friends(g, name):
         else:
             g.add_edge(name,parts[1])
 
-def snowball_sampling(g, center, count, max_depth=2, current_depth=0, taboo_list=[]):
+def snowball_sampling(g, center, max_depth=3, current_depth=0, taboo_list=[]):
     # if we have reached the depth limit of the search, bomb out.
     #print center, current_depth, max_depth, taboo_list
     if current_depth==max_depth: 
@@ -61,26 +63,49 @@ def snowball_sampling(g, center, count, max_depth=2, current_depth=0, taboo_list
     read_lj_friends(g, center)
     
     for node in g.neighbors(center):
-        count=count+1
-        print count
-        taboo_list=snowball_sampling(g, node, count, current_depth=current_depth+1, max_depth=max_depth, taboo_list=taboo_list)
+        taboo_list=snowball_sampling(g, node, current_depth=current_depth+1, max_depth=max_depth, taboo_list=taboo_list)
     
     return taboo_list
  
 
 def main():
     g=net.Graph()
-    snowball_sampling(g,'navalny', 0)
-    #g=net.read_pajek('twitter_graph')
+    #snowball_sampling(g,'navalny')
+    #print 'done'
+    print 'loading'
+    g=net.read_pajek('lj_graph')
+    print 'done'
+    #find the celebrities
+    print 'calculating degrees'
+    degrees=net.degree(g)
+    s_degrees=sorted_map(degrees)
+    res_degrees=s_degrees[0:9]
+    print res_degrees
+    print 'done'
+    #find the gossipmongers
+    print 'calculating closeness'
+    closeness=net.closeness_centrality(g)
+    s_closeness=sorted_map(closeness)
+    res_closeness=s_closeness[0:9]
+    print res_closeness
+    print 'done'
+    #find bottlenecks
+    print 'calculating betweenness'
+    betweenness=net.betweenness_centrality(g)
+    s_betweenness=sorted_map(betweenness)
+    res_betweenness=s_betweenness[0:9]
+    print res_betweenness
+    print 'done'
     #for n in g:
     #    g.node[n]['name'] = n
     # write json formatted data
     #d = json_graph.node_link_data(g) # node-link format to serialize
     # write json
-    net.write_pajek(g,'lj_graph')
-    json.dump(d, open('force/lj_graph.json','w'))
-    http_server.load_url('force/force.html')
-	
+    #net.write_pajek(g,'lj_lvl3_graph.net')
+    #print 'done'
+    #json.dump(d, open('force/lj_graph.json','w'))
+    #http_server.load_url('force/force.html')
+    #net.draw(g)
     
 
 if __name__ == '__main__':
