@@ -19,6 +19,13 @@ def sorted_map(map):
     res=sorted(map.iteritems(), key=lambda (k,v): (-v,k))
     return res
 
+def trim_degrees(g, degree=1):
+    d=net.degree(g)
+    for n in g.nodes():
+        if d[n]<=degree:
+            g.remove_node(n)
+    return g
+
 def read_tw_friends(g, name):
     response=urllib.urlopen('https://api.twitter.com/1/followers/ids.json?cursor=-1&user_id='+name)
     lines=response.readlines()      
@@ -73,7 +80,11 @@ def main():
     #snowball_sampling(g,'navalny')
     #print 'done'
     print 'loading'
-    g=net.read_pajek('lj_graph')
+    g=net.read_pajek('lj_trim_graph.net')
+    print len(g)
+    #g=trim_degrees(g)
+    #net.write_pajek(g,'lj_trim_graph.net')
+    #print len(g)
     print 'done'
     #find the celebrities
     print 'calculating degrees'
