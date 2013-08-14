@@ -19,7 +19,7 @@ def sorted_map(map):
     res=sorted(map.iteritems(), key=lambda (k,v): (-v,k))
     return res
 
-def trim_degrees(g, degree):
+def trim_degrees(g, degree=1):
     d=net.degree(g)
     for n in g.nodes():
         if d[n]<=degree:
@@ -82,7 +82,7 @@ def main():
     print 'loading'
     g=net.read_pajek('lj_trim_graph.net')
     print len(g)
-    #g=trim_degrees(g,50)
+    #g=trim_degrees(g)
     #net.write_pajek(g,'lj_trim_graph.net')
     #print len(g)
     print 'done'
